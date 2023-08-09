@@ -1,6 +1,26 @@
+# Steps for initializing Terraform S3 backend
+# 1. Remove any existing state resources (delete S3 bucket and DynamoDB table)
+#    from AWS console
+# 2. Comment out terraform backend config
+# 3. Use below S3 bucket, S3 versioning, DynamoDB table Terraform resources to 
+#    create necessary infrastructure for backend
+# 4. Run 'terraform init' to setup temporary local state
+# 5. Reun 'terraform apply' to create resources for backend
+# 6. Uncomment Terraform backend config
+# 7. Run 'terraform init' once more to replace the existing local backend with
+#    the newly created S3 backend
+# 8. Remove existing local state files (terraform.tfstate and terraform.tfstate.backup)
+#
+# https://www.youtube.com/watch?v=FTgvgKT09qM
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+# Terraform S3 Backend config and resources
 terraform {
   backend "s3" {
-    bucket         = "terraform-state-bmulnix"
+    bucket         = "terraform-state-gameoflife-bmulnix"
     key            = "global/s3/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-locking"
@@ -8,19 +28,14 @@ terraform {
   }
 }
 
-provider "aws" {
-  region = "us-east-1"
-}
-
-# Terraform S3 Backend Infra
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "terraform-state-bmulnix"
+  bucket = "terraform-state-gameoflife-bmulnix"
   lifecycle {
     prevent_destroy = true
   }
 }
 
-resource "aws_s3_bucket_versioning" "terraform_s3_versionig" {
+resource "aws_s3_bucket_versioning" "terraform_s3_versioning" {
   bucket = aws_s3_bucket.terraform_state.bucket
   versioning_configuration {
     status = "Enabled"
@@ -47,16 +62,62 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 }
 
+# Cognito User Pool and Client
 resource "aws_cognito_user_pool" "pool" {
   name = "congnito-gameoflife-user-pool"
+
+  username_attributes      = ["email"]
+  auto_verified_attributes = ["email"]
+  password_policy {
+    minimum_length                   = 6
+    temporary_password_validity_days = 7
+  }
+
+  verification_message_template {
+    default_email_option = "CONFIRM_WITH_CODE"
+    email_subject        = "Account Confirmation"
+    email_message        = "Your confirmation code is {####}"
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "email"
+    required                 = true
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
 }
 
+# enable USER_SRP_AUTH for this client
 resource "aws_cognito_user_pool_client" "client" {
   name         = "cognito-gameoflife-user-pool-app-client"
   user_pool_id = aws_cognito_user_pool.pool.id
+
+  generate_secret               = false
+  refresh_token_validity        = 90
+  prevent_user_existence_errors = "ENABLED"
+  explicit_auth_flows = [
+    "ALLOW_REFRESH_TOKEN_AUTH",
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_ADMIN_USER_PASSWORD_AUTH"
+  ]
+
+  
+
+
 }
 
-# Cognito User Pool info output
+resource "aws_cognito_user_pool_domain" "cognito-domain" {
+  domain       = "gameoflife-bmulnix"
+  user_pool_id = aws_cognito_user_pool.pool.id
+}
+
+# Cognito User Pool info outputs
 output "AWS_REGION" {
   value     = "us-east-1"
   sensitive = false
@@ -71,44 +132,3 @@ output "AUTH_USER_POOL_WEB_CLIENT_ID" {
   value     = aws_cognito_user_pool_client.client.id
   sensitive = false
 }
-
-# Static React S3 Cloudfront hosting
-variable "domainName" {
-  default = "react-test.blakemulnix.io"
-  type    = string
-}
-
-variable "bucketName" {
-  default = "react-test.blakemulnix.io"
-  type    = string
-}
-
-resource "aws_s3_bucket" "static_react_bucket" {
-  bucket = "gameoflife-react-bucket-bmulnix"
-  acl    = "private"
-
-}
-
-resource "aws_s3_bucket_versioning" "react_s3_versioning" {
-  bucket = aws_s3_bucket.static_react_bucket.bucket
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "block_public_access" {
-  bucket = aws_s3_bucket.static_react_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-
-
-// This command will set these outputs to environment variables
-// export $(terraform output | sed 's/\s*=\s*/=/g' | xargs)
-
-// aws cognito-idp admin-create-user  --user-pool-id us-east-1_CaMYEQajy  --username gameoflife-user-1
-// aws cognito-idp admin-set-user-password --user-pool-id us-east-1_CaMYEQajy --username "gameoflife-user-1" --password 'Password1234#' --permanent

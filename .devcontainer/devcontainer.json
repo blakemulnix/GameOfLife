@@ -11,7 +11,19 @@
 			"terragrunt": "latest"
 		}
 	},
-	"postStartCommand": "bash ./.devcontainer/postStartCommand.sh"
+	"postStartCommand": "bash ./.devcontainer/postStartCommand.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"GitHub.copilot-chat",
+				"GitHub.copilot",
+				"dbaeumer.vscode-eslint",
+				"amazonwebservices.aws-toolkit-vscode",
+				"GitHub.codespaces",
+				"ms-vscode-remote.remote-containers"
+			]
+		}
+	}
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

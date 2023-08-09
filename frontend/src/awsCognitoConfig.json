@@ -1,0 +1,17 @@
+{
+  "AUTH_USER_POOL_ID": {
+    "sensitive": false,
+    "type": "string",
+    "value": "us-east-1_VYKibX7lN"
+  },
+  "AUTH_USER_POOL_WEB_CLIENT_ID": {
+    "sensitive": false,
+    "type": "string",
+    "value": "1eqs4du1m8k0ap7mu7ge1u8542"
+  },
+  "AWS_REGION": {
+    "sensitive": false,
+    "type": "string",
+    "value": "us-east-1"
+  }
+}
