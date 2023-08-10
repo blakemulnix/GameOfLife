@@ -15,7 +15,7 @@ const Status = () => {
       .catch((err) => {
         console.error(`Error getting session: ${err}`);
       });
-  }, []);
+  }, [getSession]);
 
   return <div>
     {status ? <button onClick={logout}>Logout</button> : "Please login"}
