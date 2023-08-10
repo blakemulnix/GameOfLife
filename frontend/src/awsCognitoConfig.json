@@ -1,13 +1,18 @@
 {
+  "AUTH_USER_POOL_DOMAIN": {
+    "sensitive": false,
+    "type": "string",
+    "value": "gameoflife-bmulnix"
+  },
   "AUTH_USER_POOL_ID": {
     "sensitive": false,
     "type": "string",
-    "value": "us-east-1_VYKibX7lN"
+    "value": "us-east-1_UtltXTFzS"
   },
   "AUTH_USER_POOL_WEB_CLIENT_ID": {
     "sensitive": false,
     "type": "string",
-    "value": "1eqs4du1m8k0ap7mu7ge1u8542"
+    "value": "1gooc732mqkj563929q6tc140m"
   },
   "AWS_REGION": {
     "sensitive": false,

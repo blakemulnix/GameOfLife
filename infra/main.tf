@@ -13,6 +13,18 @@
 #
 # https://www.youtube.com/watch?v=FTgvgKT09qM
 
+# Useful Terraform commands
+# terraform init - initialize Terraform project
+# terraform plan - show changes to be applied
+# terraform apply - apply changes
+# terraform destroy - destroy resources
+# terraform show - show current state
+# terraform output - show outputs
+# terraform console - interactive console for Terraform interpolations
+# terraform fmt - format Terraform files
+# terraform validate - validate Terraform files
+# terraform graph - generate visual representation of Terraform resources
+
 provider "aws" {
   region = "us-east-1"
 }
@@ -68,9 +80,14 @@ resource "aws_cognito_user_pool" "pool" {
 
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
+  mfa_configuration        = "OFF"
+
   password_policy {
-    minimum_length                   = 6
-    temporary_password_validity_days = 7
+    minimum_length    = 8
+    require_lowercase = true
+    require_uppercase = true
+    require_numbers   = true
+    require_symbols   = true
   }
 
   verification_message_template {
@@ -79,21 +96,11 @@ resource "aws_cognito_user_pool" "pool" {
     email_message        = "Your confirmation code is {####}"
   }
 
-  schema {
-    attribute_data_type      = "String"
-    developer_only_attribute = false
-    mutable                  = true
-    name                     = "email"
-    required                 = true
-
-    string_attribute_constraints {
-      min_length = 1
-      max_length = 256
-    }
+  admin_create_user_config {
+    allow_admin_create_user_only = false
   }
 }
 
-# enable USER_SRP_AUTH for this client
 resource "aws_cognito_user_pool_client" "client" {
   name         = "cognito-gameoflife-user-pool-app-client"
   user_pool_id = aws_cognito_user_pool.pool.id
@@ -102,17 +109,18 @@ resource "aws_cognito_user_pool_client" "client" {
   refresh_token_validity        = 90
   prevent_user_existence_errors = "ENABLED"
   explicit_auth_flows = [
-    "ALLOW_REFRESH_TOKEN_AUTH",
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_ADMIN_USER_PASSWORD_AUTH"
+    "ALLOW_CUSTOM_AUTH",
+    "ALLOW_USER_SRP_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH"
   ]
 
-  
-
-
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_scopes                 = ["email", "openid", "profile"]
+  callback_urls                        = ["http://localhost:3000/callback"]
 }
 
-resource "aws_cognito_user_pool_domain" "cognito-domain" {
+resource "aws_cognito_user_pool_domain" "cognito_domain" {
   domain       = "gameoflife-bmulnix"
   user_pool_id = aws_cognito_user_pool.pool.id
 }
@@ -130,5 +138,10 @@ output "AUTH_USER_POOL_ID" {
 
 output "AUTH_USER_POOL_WEB_CLIENT_ID" {
   value     = aws_cognito_user_pool_client.client.id
+  sensitive = false
+}
+
+output "AUTH_USER_POOL_DOMAIN" {
+  value     = aws_cognito_user_pool_domain.cognito_domain.id
   sensitive = false
 }
