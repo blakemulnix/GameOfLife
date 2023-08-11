@@ -1,19 +1,19 @@
-import React, { useState, useContext } from "react";
-import { AccountContext } from "./Account";
+import React, { useState, useContext, FormEvent } from "react";
+import { AccountContext, AccountContextValue } from "./Account";
 
-const Login = () => {
+const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const { authenticate } = useContext(AccountContext);
+  const { authenticate } = useContext(AccountContext) as AccountContextValue;
 
-  const onSubmit = (event) => {
+  const onSubmit = (event: FormEvent) => {
     event.preventDefault();
 
     authenticate(email, password)
       .then(() => {
         console.log("Logged in!");
-      }).catch((err) => {
+      }).catch((err: Error) => {
         console.error(`Error logging in: ${err}`);
       });
   };
@@ -23,18 +23,20 @@ const Login = () => {
       <form onSubmit={onSubmit}>
         <label htmlFor="email">Email</label>
         <input
+          type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-        ></input>
+        />
         <label htmlFor="password">Password</label>
         <input
+          type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-        ></input>
+        />
         <button type="submit">Log in</button>
       </form>
     </div>
   );
-}
+};
 
 export default Login;

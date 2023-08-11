@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import UserPool from "../UserPool";
+import { ISignUpResult } from "amazon-cognito-identity-js";
 
-const Signup = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const Signup: React.FC = () => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
 
-  const onSubmit = (event) => {
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    UserPool.signUp(email, password, [], null, (err, data) => {
+    UserPool.signUp(email, password, [], [], (err: Error | undefined, data: ISignUpResult | undefined) => {
       if (err) {
         console.error(`Error signing up: ${err}`);
       } else {
@@ -22,18 +23,22 @@ const Signup = () => {
       <form onSubmit={onSubmit}>
         <label htmlFor="email">Email</label>
         <input
+          type="email"
+          id="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-        ></input>
+        />
         <label htmlFor="password">Password</label>
         <input
+          type="password"
+          id="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-        ></input>
+        />
         <button type="submit">Sign up</button>
       </form>
     </div>
   );
-}
+};
 
-export default Signup
+export default Signup;
